@@ -1,25 +1,30 @@
-const express = require('express')
-const logger = require('morgan')
-const cors = require('cors')
+const express = require("express");
+const logger = require("morgan"); // HTTP request logger middleware
+const cors = require("cors"); //  это посредник (middleware) для Express,  для настройки HTTP-заголовков, связанных с CORS (Cross-Origin Resource Sharing - возможность использования ресурсов из другого источника).
 
-const contactsRouter = require('./routes/api/contacts')
+require("dotenv").config(); // Переменные окружения - для безопасности, используется файл .env
 
-const app = express()
+const contactsRouter = require("./routes/api/contacts");
+const { PORT } = process.env;
+const app = express(); // создание сервера
+app.use(express.json()); // Подключается обработка JSON
 
-const formatsLogger = app.get('env') === 'development' ? 'dev' : 'short'
+// const formatsLogger = app.get("env") === "development" ? "dev" : "short";
+app.use(cors()); // Подключается  CORS (теперь express знает CORS)
+app.use(logger("dev")); //Подключается логгер (в консоли показует время запуска приложения(логгирует))
+app.use("/api/contacts", contactsRouter); // "/api/contacts" - эндпоинт. Если кто то обращается к этому эндпоинту, то отрабатывает функция contactsRouter
 
-app.use(logger(formatsLogger))
-app.use(cors())
-app.use(express.json())
+// const formatsLogger = app.get("env") === "development" ? "dev" : "short";
 
-app.use('/api/contacts', contactsRouter)
-
-app.use((req, res) => {
-  res.status(404).json({ message: 'Not found' })
-})
-
+app.use((req, res, next) => {
+  res.status(404).json({ message: "Not Found" }); // обработка ошибка
+});
 app.use((err, req, res, next) => {
-  res.status(500).json({ message: err.message })
-})
+  const { message = "Server wrong", status = 500 } = err;
 
-module.exports = app
+  res.status(status).json({ message }); // обработка ошибка
+});
+
+app.listen(PORT, () => {
+  console.log("server is runing");
+});
